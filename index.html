@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>don't let me forget</title>
+  <meta charset="UTF-8">
+  <link rel="shortcut icon" href="files/favicon.png"/>
+  <style>
+  	body {
+      margin: 0px;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+      overflow: hidden;
+  	}
+
+    video {
+      position: fixed;
+    }
+
+    .air {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .prelude {
+      height: 100%;
+      right: 0px;
+    }
+
+    .truth {
+      height: 100%;
+      left: 0px;
+    }
+  </style>
+</head>
+
+<body>
+</body>
+
+<script>
+  const settings = {
+    videos : {
+      air     : 'files/47455918_549061632276692_6438509323663441920_n.mp4',
+      prelude : 'files/20619516_121180955186703_1440437129481027584_n.mp4',
+      truth   : 'files/19232295_684025368461689_1759971726956953600_n.mp4',
+    },
+
+    layers : 2,
+
+    zIndex : {
+      min : 0,
+      max : 8,
+
+      delay : {
+        min :  100,
+        max : 1600,
+      },
+    },
+
+    blend : {
+      modes : [
+        'normal',
+        'multiply',
+        'screen',
+        'overlay',
+        'darken',
+        'lighten',
+        'color-dodge',
+        'color-burn',
+        'hard-light',
+        'soft-light',
+        'difference',
+        'exclusion',
+        'hue',
+        'saturation',
+        'color',
+        'luminosity',
+      ],
+
+      delay : {
+        min :  400,
+        max : 1600,
+      },
+    },
+
+    filter : {
+      blur : {
+        probability : 1 / 8,
+
+        min : 0,
+        max : 8,
+        def : 0,
+
+        symbol : 'px',
+
+      },
+
+      brightness : {
+        probability : 1 / 4,
+
+        min :    0,
+        max : 1000,
+        def :  100,
+
+        symbol : '%',
+      },
+
+      contrast : {
+        probability : 1 / 4,
+
+        min :    0,
+        max : 1000,
+        def :  100,
+
+        symbol : '%',
+      },
+
+      'hue-rotate' : {
+        probability : 1 / 2,
+
+        min :   0,
+        max : 360,
+        def :   0,
+
+        symbol : 'deg',
+      },
+
+      opacity : {
+        probability : 1,
+
+        min :   0,
+        max : 100,
+        def :  50,
+
+        symbol : '%',
+      },
+
+      saturate : {
+        probability : 1 / 2,
+
+        min :    0,
+        max : 1000,
+        def :  100,
+
+        symbol : '%',
+      },
+
+      delay : {
+        min :  100,
+        max : 1600,
+      },
+    },
+
+    jitter : {
+      x : 8,
+      y : 4,
+
+      delay : {
+        min :  100,
+        max : 1600,
+      },
+    },
+  };
+
+  const f = {
+    randomIntegerInclusive : (min, max) => {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+
+    randomIntegerInRange : range => f.randomIntegerInclusive(range.min, range.max),
+
+    randomItem : array => array[Math.floor(Math.random() * array.length)],
+
+    shuffleArray : array => {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+
+      return array;
+    },
+
+    coin : p => Math.random() < p,
+  };
+
+  const createLayers = (video, layers, name) => {
+    for (let i = 0; i < layers; i++) {
+      const layer  = document.createElement('video');
+      const source = document.createElement('source');
+      document.body.appendChild(layer);
+      layer.appendChild(source);
+      layer.className = name;
+      source.src = video;
+
+      layer.autoplay = true;
+      layer.muted    = true;
+      layer.loop     = true;
+
+      const zIndex = () => {
+        layer.style.zIndex = f.randomIntegerInRange(settings.zIndex);
+        const delay = f.randomIntegerInRange(settings.zIndex.delay);
+        setTimeout(zIndex, delay);
+      }
+
+      const blend = () => {
+        layer.style.mixBlendMode = f.randomItem(settings.blend.modes);
+        const delay = f.randomIntegerInRange(settings.blend.delay);
+        setTimeout(blend, delay);
+      }
+
+      const filter = () => {
+        const newFilter = {};
+
+        for (const property in settings.filter) {
+          if (property != 'delay') {
+            const {probability, min, max, def, symbol} = settings.filter[property];
+            newFilter[property] = f.coin(probability) ? f.randomIntegerInclusive(min, max) : def;
+            newFilter[property] = property + '(' + newFilter[property] + symbol + ')';
+          }
+        }
+
+        layer.style.filter = f.shuffleArray(Object.values(newFilter)).join(' ');
+        const delay = f.randomIntegerInRange(settings.filter.delay);
+        setTimeout(filter, delay);
+      }
+
+      const jitter = () => {
+        const [x, y] = [settings.jitter.x, settings.jitter.y].map(n => f.randomIntegerInclusive(-n, n));
+        layer.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+        const delay = f.randomIntegerInRange(settings.jitter.delay);
+        setTimeout(jitter, delay);
+      }
+
+      zIndex();
+      blend();
+      filter();
+      jitter();
+    }
+  }
+
+  for (const name in settings.videos) {
+    createLayers(settings.videos[name], settings.layers, name);
+  }
+</script>
+
+</html>
